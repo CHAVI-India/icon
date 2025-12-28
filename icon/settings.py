@@ -125,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-gb'
 
-TIME_ZONE = 'Asia/Kolkata'
+TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'Asia/Kolkata')
 
 USE_I18N = True
 
@@ -145,3 +145,9 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery Settings
+
+CELERY_TIMEZONE=os.getenv('DJANGO_TIME_ZONE', 'Asia/Kolkata')
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
