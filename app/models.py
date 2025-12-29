@@ -2,6 +2,9 @@ from email.policy import default
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+import magic
+import zipfile
+import os
 # Create your models here.
 
 ## File handling model
@@ -12,15 +15,71 @@ class ProcessingStatus(models.TextChoices):
     COMPLETED = 'completed', 'Completed'
     FAILED = 'failed', 'Failed'
 
+def validate_zip_file(file):
+    """
+    Validator function to ensure uploaded file is a valid ZIP file.
+    Performs both extension check and MIME type detection.
+    """
+    # Check file extension
+    file_extension = os.path.splitext(file.name)[1].lower()
+    if file_extension != '.zip':
+        raise ValidationError(
+            f'Invalid file extension "{file_extension}". Only .zip files are allowed.'
+        )
+    
+    # Check MIME type using python-magic
+    try:
+        # Read the first chunk of the file for MIME type detection
+        file.seek(0)
+        file_mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)  # Reset file pointer
+        
+        # Valid MIME types for ZIP files
+        valid_mime_types = [
+            'application/zip',
+            'application/x-zip-compressed',
+            'multipart/x-zip'
+        ]
+        
+        if file_mime not in valid_mime_types:
+            raise ValidationError(
+                f'Invalid file type. Detected MIME type: "{file_mime}". '
+                f'Expected a ZIP file with MIME type: {" or ".join(valid_mime_types)}.'
+            )
+    except Exception as e:
+        raise ValidationError(f'Error detecting file type: {str(e)}')
+    
+    # Verify the file is a valid ZIP archive
+    try:
+        file.seek(0)
+        # Try to open as a ZIP file to verify integrity
+        zip_file = zipfile.ZipFile(file)
+        # Test the ZIP file for errors
+        bad_file = zip_file.testzip()
+        if bad_file:
+            raise ValidationError(
+                f'Corrupted ZIP file. File "{bad_file}" failed integrity check.'
+            )
+        zip_file.close()
+        file.seek(0)  # Reset file pointer
+    except zipfile.BadZipFile:
+        raise ValidationError('Invalid or corrupted ZIP file.')
+    except Exception as e:
+        raise ValidationError(f'Error validating ZIP file: {str(e)}')
+
 class DICOMFile(models.Model):
     '''
-    Model to store information about the DICOM file uploaded by the user.
+    Model to store information about the DICOM file uploaded by the user. This model also stores information about the processing done for the DICOM files in the archive.
     '''
-    file = models.FileField(upload_to='dicom_files')
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    processing_status = models.CharField(max_length=255, default=ProcessingStatus.PENDING, choices=ProcessingStatus.choices)
-    date_processing_completed = models.DateTimeField(null=True, blank=True)
-    processing_log_data = models.JSONField(null=True, blank=True)
+    file = models.FileField(
+        upload_to='dicom_files',
+        help_text="Upload the DICOM file here.",
+        validators=[validate_zip_file]
+    )
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE,help_text="User who uploaded the DICOM file. Please upload a single ZIP file.")
+    processing_status = models.CharField(max_length=255, default=ProcessingStatus.PENDING, choices=ProcessingStatus.choices,help_text="Processing status of the DICOM file.")
+    date_processing_completed = models.DateTimeField(null=True, blank=True,help_text="Date and time when the processing is completed successfully.")
+    processing_log_data = models.JSONField(null=True, blank=True,help_text="Processing log data stored after processing is completed.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
