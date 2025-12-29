@@ -158,24 +158,69 @@ class PrescriptionTemplate(models.Model):
     
     def clean(self):
         super().clean()
+        errors = {}
+        
         # Validate that the appropriate beam energy is provided for the selected modality
         if self.treatment_modality == TreatmentModalityChoices.EBRT:
             if not self.ebrt_beam_energy:
-                raise ValidationError({'ebrt_beam_energy': 'EBRT beam energy is required when treatment modality is EBRT.'})
+                errors['ebrt_beam_energy'] = 'EBRT beam energy is required when treatment modality is EBRT.'
+            # Ensure other modality energies are not provided
+            if self.electron_beam_energy:
+                errors['electron_beam_energy'] = 'Electron beam energy should not be provided when treatment modality is EBRT.'
+            if self.proton_beam_energy:
+                errors['proton_beam_energy'] = 'Proton beam energy should not be provided when treatment modality is EBRT.'
+            if self.carbon_beam_energy:
+                errors['carbon_beam_energy'] = 'Carbon beam energy should not be provided when treatment modality is EBRT.'
+                
         elif self.treatment_modality == TreatmentModalityChoices.ELECTRON:
             if not self.electron_beam_energy:
-                raise ValidationError({'electron_beam_energy': 'Electron beam energy is required when treatment modality is Electron.'})
+                errors['electron_beam_energy'] = 'Electron beam energy is required when treatment modality is Electron.'
+            # Ensure other modality energies are not provided
+            if self.ebrt_beam_energy:
+                errors['ebrt_beam_energy'] = 'EBRT beam energy should not be provided when treatment modality is Electron.'
+            if self.proton_beam_energy:
+                errors['proton_beam_energy'] = 'Proton beam energy should not be provided when treatment modality is Electron.'
+            if self.carbon_beam_energy:
+                errors['carbon_beam_energy'] = 'Carbon beam energy should not be provided when treatment modality is Electron.'
+                
         elif self.treatment_modality == TreatmentModalityChoices.PROTON:
             if not self.proton_beam_energy:
-                raise ValidationError({'proton_beam_energy': 'Proton beam energy is required when treatment modality is Proton.'})
+                errors['proton_beam_energy'] = 'Proton beam energy is required when treatment modality is Proton.'
+            # Ensure other modality energies are not provided
+            if self.ebrt_beam_energy:
+                errors['ebrt_beam_energy'] = 'EBRT beam energy should not be provided when treatment modality is Proton.'
+            if self.electron_beam_energy:
+                errors['electron_beam_energy'] = 'Electron beam energy should not be provided when treatment modality is Proton.'
+            if self.carbon_beam_energy:
+                errors['carbon_beam_energy'] = 'Carbon beam energy should not be provided when treatment modality is Proton.'
+                
         elif self.treatment_modality == TreatmentModalityChoices.CARBON:
             if not self.carbon_beam_energy:
-                raise ValidationError({'carbon_beam_energy': 'Carbon beam energy is required when treatment modality is Carbon Ion.'})
+                errors['carbon_beam_energy'] = 'Carbon beam energy is required when treatment modality is Carbon Ion.'
+            # Ensure other modality energies are not provided
+            if self.ebrt_beam_energy:
+                errors['ebrt_beam_energy'] = 'EBRT beam energy should not be provided when treatment modality is Carbon Ion.'
+            if self.electron_beam_energy:
+                errors['electron_beam_energy'] = 'Electron beam energy should not be provided when treatment modality is Carbon Ion.'
+            if self.proton_beam_energy:
+                errors['proton_beam_energy'] = 'Proton beam energy should not be provided when treatment modality is Carbon Ion.'
+                
         elif self.treatment_modality == TreatmentModalityChoices.BRACHYTHERAPY:
-            # Brachytherapy doesn't require beam energy
-            pass
+            # Brachytherapy doesn't require beam energy, ensure none are provided
+            if self.ebrt_beam_energy:
+                errors['ebrt_beam_energy'] = 'EBRT beam energy should not be provided when treatment modality is Brachytherapy.'
+            if self.electron_beam_energy:
+                errors['electron_beam_energy'] = 'Electron beam energy should not be provided when treatment modality is Brachytherapy.'
+            if self.proton_beam_energy:
+                errors['proton_beam_energy'] = 'Proton beam energy should not be provided when treatment modality is Brachytherapy.'
+            if self.carbon_beam_energy:
+                errors['carbon_beam_energy'] = 'Carbon beam energy should not be provided when treatment modality is Brachytherapy.'
+                
         elif self.treatment_modality:
-            raise ValidationError({'treatment_modality': 'Invalid treatment modality selected.'})
+            errors['treatment_modality'] = 'Invalid treatment modality selected.'
+        
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         return self.name
@@ -259,7 +304,6 @@ class DICOMStudy(models.Model):
     def __str__(self):
         return self.study_instance_uid
 
-
 class DICOMSeries(models.Model):
     '''
     Model to store information about series from the DICOM data.
@@ -279,7 +323,6 @@ class DICOMSeries(models.Model):
     def __str__(self):
         return self.series_instance_uid
 
-
 class DICOMInstance(models.Model):
     '''
     Model to store information about instance from the DICOM data.
@@ -296,7 +339,6 @@ class DICOMInstance(models.Model):
     
     def __str__(self):
         return self.sop_instance_uid
-
 
 class ImageInformation(models.Model):
     '''
