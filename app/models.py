@@ -125,7 +125,7 @@ class Ruleset(models.Model):
         verbose_name_plural = "Rule Sets"
         constraints = [
             models.UniqueConstraint(
-                fields=['rulegroup_name', 'ruleset_order'],
+                fields=['rulegroup', 'ruleset_order'],
                 name='unique_rulegroup_ruleset_order'
             )
         ]
@@ -171,7 +171,7 @@ class Rule(models.Model):
         verbose_name_plural = "Rules"
         constraints = [
             models.UniqueConstraint(
-                fields=['ruleset_name', 'rule_order'],
+                fields=['ruleset', 'rule_order'],
                 name='unique_ruleset_rule_order'
             )
         ]
@@ -419,7 +419,7 @@ class ImageInformation(models.Model):
         verbose_name_plural = "Image Information"
 
     def __str__(self):
-        return self.dicom_instance
+        return f"ImageInformation {self.id}"
 
 class RTStructureSetInformation(models.Model):
     '''
@@ -436,7 +436,7 @@ class RTStructureSetInformation(models.Model):
         verbose_name_plural = "RT Structure Set Information"
 
     def __str__(self):
-        return self.dicom_instance
+        return f"RTStructureSetInformation {self.id}"
 
 class RTStructureROI(models.Model):
 
@@ -454,7 +454,7 @@ class RTStructureROI(models.Model):
         verbose_name_plural = "RT Structure Regions of Interest"
 
     def __str__(self):
-        return self.roi_name
+        return f"RTStructureROI {self.id}"
 
 
 

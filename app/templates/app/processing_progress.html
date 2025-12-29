@@ -1,0 +1,214 @@
+{% extends "app/base.html" %}
+
+{% block title %}Processing Progress - DICOM Processing{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-card {
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .progress {
+        height: 30px;
+        font-size: 14px;
+    }
+    .status-badge {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+    .task-description {
+        min-height: 24px;
+        font-style: italic;
+        color: #6c757d;
+    }
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+    .completed-icon {
+        color: #28a745;
+        font-size: 48px;
+    }
+    .error-icon {
+        color: #dc3545;
+        font-size: 48px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 offset-lg-1">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-gear-fill"></i> DICOM File Processing
+                </h4>
+            </div>
+            <div class="card-body">
+                <div id="tasks-container">
+                    {% for task_id in task_ids %}
+                    <div class="card task-card" id="task-{{ task_id }}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-file-earmark-medical"></i> Task {{ forloop.counter }}
+                                </h5>
+                                <span class="badge status-badge" id="status-{{ task_id }}">
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                    Initializing...
+                                </span>
+                            </div>
+                            
+                            <div class="task-description mb-3" id="description-{{ task_id }}">
+                                Waiting to start...
+                            </div>
+                            
+                            <div class="progress mb-2">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" 
+                                     id="progress-{{ task_id }}"
+                                     style="width: 0%"
+                                     aria-valuenow="0" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    0%
+                                </div>
+                            </div>
+                            
+                            <div class="small text-muted">
+                                Task ID: <code>{{ task_id }}</code>
+                            </div>
+                            
+                            <div class="mt-3 d-none" id="result-{{ task_id }}">
+                                <!-- Results will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/admin/app/dicomfile/" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Back to DICOM Files
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const taskIds = {{ task_ids|safe }};
+    const updateInterval = 1000; // Update every 1 second
+    const taskStates = {};
+    
+    // Initialize task states
+    taskIds.forEach(taskId => {
+        taskStates[taskId] = {
+            completed: false,
+            failed: false
+        };
+    });
+    
+    function updateTaskProgress(taskId) {
+        fetch(`/dicom/api/task-status/${taskId}/`)
+            .then(response => response.json())
+            .then(data => {
+                const progressBar = document.getElementById(`progress-${taskId}`);
+                const statusBadge = document.getElementById(`status-${taskId}`);
+                const description = document.getElementById(`description-${taskId}`);
+                const resultDiv = document.getElementById(`result-${taskId}`);
+                
+                // Update progress bar
+                const percent = data.percent || 0;
+                progressBar.style.width = `${percent}%`;
+                progressBar.setAttribute('aria-valuenow', percent);
+                progressBar.textContent = `${percent}%`;
+                
+                // Update description
+                description.textContent = data.description || 'Processing...';
+                
+                // Update status badge based on state
+                if (data.state === 'PENDING') {
+                    statusBadge.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Pending';
+                    statusBadge.className = 'badge status-badge bg-secondary';
+                } else if (data.state === 'PROGRESS') {
+                    statusBadge.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing';
+                    statusBadge.className = 'badge status-badge bg-info';
+                    progressBar.classList.add('progress-bar-animated');
+                } else if (data.state === 'SUCCESS') {
+                    statusBadge.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+                    statusBadge.className = 'badge status-badge bg-success';
+                    progressBar.classList.remove('progress-bar-animated');
+                    progressBar.classList.remove('progress-bar-striped');
+                    progressBar.classList.add('bg-success');
+                    
+                    // Display results
+                    if (data.result && data.result.results) {
+                        const results = data.result.results;
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-check-circle"></i> Processing Complete!</h6>
+                                <ul class="mb-0">
+                                    <li>Total Files: ${results.total_files}</li>
+                                    <li>Successful: ${results.successful}</li>
+                                    <li>Failed: ${results.failed}</li>
+                                    <li>Skipped: ${results.skipped}</li>
+                                </ul>
+                            </div>
+                        `;
+                        resultDiv.classList.remove('d-none');
+                    }
+                    
+                    taskStates[taskId].completed = true;
+                } else if (data.state === 'FAILURE') {
+                    statusBadge.innerHTML = '<i class="bi bi-x-circle-fill"></i> Failed';
+                    statusBadge.className = 'badge status-badge bg-danger';
+                    progressBar.classList.remove('progress-bar-animated');
+                    progressBar.classList.remove('progress-bar-striped');
+                    progressBar.classList.add('bg-danger');
+                    
+                    // Display error
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-exclamation-triangle"></i> Processing Failed</h6>
+                            <p class="mb-0">${data.error || 'Unknown error occurred'}</p>
+                        </div>
+                    `;
+                    resultDiv.classList.remove('d-none');
+                    
+                    taskStates[taskId].failed = true;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching task status:', error);
+            });
+    }
+    
+    function updateAllTasks() {
+        let allCompleted = true;
+        
+        taskIds.forEach(taskId => {
+            if (!taskStates[taskId].completed && !taskStates[taskId].failed) {
+                updateTaskProgress(taskId);
+                allCompleted = false;
+            }
+        });
+        
+        // Continue polling if not all tasks are completed
+        if (!allCompleted) {
+            setTimeout(updateAllTasks, updateInterval);
+        }
+    }
+    
+    // Start updating tasks
+    updateAllTasks();
+</script>
+{% endblock %}

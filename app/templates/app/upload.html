@@ -1,0 +1,92 @@
+{% extends "app/base.html" %}
+
+{% block title %}Upload DICOM File - DICOM Processing{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-cloud-upload-fill"></i> Upload DICOM File
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="file" class="form-label">
+                            <strong>Select DICOM ZIP File</strong>
+                        </label>
+                        <input type="file" 
+                               class="form-control form-control-lg" 
+                               id="file" 
+                               name="file" 
+                               accept=".zip"
+                               required>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> 
+                            Please upload a ZIP file containing DICOM files. The file will be validated before processing.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="process_now" 
+                                   name="process_now" 
+                                   value="true"
+                                   checked>
+                            <label class="form-check-label" for="process_now">
+                                <strong>Process immediately after upload</strong>
+                            </label>
+                            <div class="form-text">
+                                If checked, processing will start automatically. Otherwise, you can process the file later from the dashboard.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-lightbulb-fill"></i> What happens next?
+                        </h6>
+                        <ul class="mb-0">
+                            <li>The ZIP file will be validated to ensure it's a valid archive</li>
+                            <li>DICOM files will be extracted and processed</li>
+                            <li>Patient, Study, Series, and Instance data will be saved to the database</li>
+                            <li>Processed files will be organized by Patient ID, Study UID, and Series UID</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <a href="/" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-cloud-upload"></i> Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Upload Tips -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-question-circle"></i> Upload Tips
+                </h5>
+                <ul class="mb-0">
+                    <li>Ensure your ZIP file contains valid DICOM files</li>
+                    <li>Files can be in nested directories - they will be flattened during extraction</li>
+                    <li>Only files with a valid Modality tag will be processed</li>
+                    <li>Supported modalities: CT, MR, PET, RTSTRUCT</li>
+                    <li>You can track processing progress in real-time after upload</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -105,7 +105,11 @@ venv/
 ENV/ 
 env.bak/ 
 venv.bak/ 
+dicom_files/
+processed_dicom_files/
 
+# Dicom files
+*.dcm
 # mkdocs documentation 
 /site 
 
