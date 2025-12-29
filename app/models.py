@@ -104,7 +104,6 @@ class ImageInformation(models.Model):
         return self.dicom_instance_id
 
 
-
 class RTStructureROI(models.Model):
 
     '''
