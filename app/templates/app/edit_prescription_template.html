@@ -1,0 +1,361 @@
+{% extends "app/base.html" %}
+
+{% block title %}Edit Prescription Template - ICON{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="bi bi-pencil-square"></i> Edit Prescription Template
+            </h2>
+            <a href="{% url 'view_templates' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Templates
+            </a>
+        </div>
+    </div>
+</div>
+
+<form id="templateForm">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Template Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="name" class="form-label">Template Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ template.name }}" required>
+                    <div class="form-text">Unique name for this prescription template</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="cancer_site" class="form-label">Cancer Site</label>
+                    <input type="text" class="form-control" id="cancer_site" name="cancer_site" value="{{ template.cancer_site }}">
+                    <div class="form-text">Site of the cancer (e.g., Breast, Lung, Prostate)</div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="cancer_side" class="form-label">Cancer Side</label>
+                    <select class="form-select" id="cancer_side" name="cancer_side">
+                        <option value="">Select...</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="rulegroup_id" class="form-label">Rule Group <span class="text-danger">*</span></label>
+                    <select class="form-select" id="rulegroup_id" name="rulegroup_id" required>
+                        <option value="">Select a rule group...</option>
+                        {% for rulegroup in rulegroups %}
+                        <option value="{{ rulegroup.id }}" {% if rulegroup.id == template.rulegroup_name.id %}selected{% endif %}>
+                            {{ rulegroup.rulegroup_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Rule group for matching this template</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Treatment Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <label for="treatment_modality" class="form-label">Treatment Modality</label>
+                    <select class="form-select" id="treatment_modality" name="treatment_modality">
+                        <option value="">Select...</option>
+                    </select>
+                    <div class="form-text">Select the treatment modality to show relevant beam energy field</div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3" id="ebrt_field" style="display: none;">
+                    <label for="ebrt_beam_energy" class="form-label">EBRT Beam Energy (MV) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" id="ebrt_beam_energy" name="ebrt_beam_energy" value="{{ template.ebrt_beam_energy|default:'' }}">
+                    <div class="form-text">Beam energy in MV for External Beam Radiotherapy</div>
+                </div>
+                
+                <div class="col-md-6 mb-3" id="electron_field" style="display: none;">
+                    <label for="electron_beam_energy" class="form-label">Electron Beam Energy (MeV) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" id="electron_beam_energy" name="electron_beam_energy" value="{{ template.electron_beam_energy|default:'' }}">
+                    <div class="form-text">Beam energy in MeV for Electron Therapy</div>
+                </div>
+                
+                <div class="col-md-6 mb-3" id="proton_field" style="display: none;">
+                    <label for="proton_beam_energy" class="form-label">Proton Beam Energy (MeV) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" id="proton_beam_energy" name="proton_beam_energy" value="{{ template.proton_beam_energy|default:'' }}">
+                    <div class="form-text">Beam energy in MeV for Proton Therapy</div>
+                </div>
+                
+                <div class="col-md-6 mb-3" id="carbon_field" style="display: none;">
+                    <label for="carbon_beam_energy" class="form-label">Carbon Beam Energy (MeV) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control" id="carbon_beam_energy" name="carbon_beam_energy" value="{{ template.carbon_beam_energy|default:'' }}">
+                    <div class="form-text">Beam energy in MeV for Carbon Ion Therapy</div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info" id="brachytherapy_note" style="display: none;">
+                <i class="bi bi-info-circle"></i> Brachytherapy does not require beam energy specification.
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Prescriptions</h5>
+                <button type="button" class="btn btn-light btn-sm" onclick="addPrescription()">
+                    <i class="bi bi-plus-circle"></i> Add Prescription
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="prescriptions-container">
+                <!-- Prescriptions will be added here dynamically -->
+            </div>
+            <div id="no-prescriptions-message" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle"></i> No prescriptions added yet. Click "Add Prescription" to add dose prescriptions.
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'view_templates' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle"></i> Update Template
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const cancerSideChoices = {{ cancer_side_choices|safe }};
+const treatmentModalityChoices = {{ treatment_modality_choices|safe }};
+const doseUnitChoices = {{ dose_unit_choices|safe }};
+const currentCancerSide = '{{ template.cancer_side }}';
+const currentModality = '{{ template.treatment_modality }}';
+const existingPrescriptions = {{ prescriptions_data|safe }};
+
+let prescriptionCounter = 0;
+
+// Populate cancer side dropdown
+const cancerSideSelect = document.getElementById('cancer_side');
+cancerSideChoices.forEach(choice => {
+    const option = document.createElement('option');
+    option.value = choice[0];
+    option.textContent = choice[1];
+    if (choice[0] === currentCancerSide) {
+        option.selected = true;
+    }
+    cancerSideSelect.appendChild(option);
+});
+
+// Populate treatment modality dropdown
+const modalitySelect = document.getElementById('treatment_modality');
+treatmentModalityChoices.forEach(choice => {
+    const option = document.createElement('option');
+    option.value = choice[0];
+    option.textContent = choice[1];
+    if (choice[0] === currentModality) {
+        option.selected = true;
+    }
+    modalitySelect.appendChild(option);
+});
+
+// Function to show/hide beam energy fields based on treatment modality
+function updateBeamEnergyFields(modality) {
+    // Hide all fields first
+    document.getElementById('ebrt_field').style.display = 'none';
+    document.getElementById('electron_field').style.display = 'none';
+    document.getElementById('proton_field').style.display = 'none';
+    document.getElementById('carbon_field').style.display = 'none';
+    document.getElementById('brachytherapy_note').style.display = 'none';
+    
+    // Remove required attributes
+    document.getElementById('ebrt_beam_energy').removeAttribute('required');
+    document.getElementById('electron_beam_energy').removeAttribute('required');
+    document.getElementById('proton_beam_energy').removeAttribute('required');
+    document.getElementById('carbon_beam_energy').removeAttribute('required');
+    
+    // Show relevant field based on selection
+    if (modality === 'EBRT') {
+        document.getElementById('ebrt_field').style.display = 'block';
+        document.getElementById('ebrt_beam_energy').setAttribute('required', 'required');
+    } else if (modality === 'Electron') {
+        document.getElementById('electron_field').style.display = 'block';
+        document.getElementById('electron_beam_energy').setAttribute('required', 'required');
+    } else if (modality === 'Proton') {
+        document.getElementById('proton_field').style.display = 'block';
+        document.getElementById('proton_beam_energy').setAttribute('required', 'required');
+    } else if (modality === 'Carbon') {
+        document.getElementById('carbon_field').style.display = 'block';
+        document.getElementById('carbon_beam_energy').setAttribute('required', 'required');
+    } else if (modality === 'Brachytherapy') {
+        document.getElementById('brachytherapy_note').style.display = 'block';
+    }
+}
+
+// Show current modality fields on page load
+updateBeamEnergyFields(currentModality);
+
+// Update fields when modality changes
+modalitySelect.addEventListener('change', function() {
+    // Clear values when changing modality
+    if (this.value !== currentModality) {
+        document.getElementById('ebrt_beam_energy').value = '';
+        document.getElementById('electron_beam_energy').value = '';
+        document.getElementById('proton_beam_energy').value = '';
+        document.getElementById('carbon_beam_energy').value = '';
+    }
+    updateBeamEnergyFields(this.value);
+});
+
+// Prescription management functions
+function addPrescription(prescriptionData = null) {
+    prescriptionCounter++;
+    
+    const roiName = prescriptionData ? prescriptionData.roi_name : '';
+    const dosePrescribed = prescriptionData ? prescriptionData.dose_prescribed : '';
+    const doseUnit = prescriptionData ? prescriptionData.dose_unit : 'Gy';
+    const fractionsPrescribed = prescriptionData ? prescriptionData.fractions_prescribed : '';
+    
+    const prescriptionHtml = `
+        <div class="card mb-3" id="prescription-${prescriptionCounter}" style="border-left: 3px solid #198754;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0"><i class="bi bi-capsule"></i> Prescription #${prescriptionCounter}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removePrescription(${prescriptionCounter})">
+                        <i class="bi bi-trash"></i> Remove
+                    </button>
+                </div>
+                
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small">ROI Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" 
+                               id="prescription_roi_${prescriptionCounter}" 
+                               value="${roiName}"
+                               placeholder="e.g., PTV, CTV, GTV" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Dose Prescribed <span class="text-danger">*</span></label>
+                        <input type="number" step="0.001" class="form-control form-control-sm" 
+                               id="prescription_dose_${prescriptionCounter}" 
+                               value="${dosePrescribed}"
+                               placeholder="e.g., 60.000" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Unit</label>
+                        <select class="form-select form-select-sm" id="prescription_unit_${prescriptionCounter}">
+                            ${doseUnitChoices.map(choice => `<option value="${choice[0]}" ${choice[0] === doseUnit ? 'selected' : ''}>${choice[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Fractions <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-sm" 
+                               id="prescription_fractions_${prescriptionCounter}" 
+                               value="${fractionsPrescribed}"
+                               placeholder="e.g., 30" min="1" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('prescriptions-container').insertAdjacentHTML('beforeend', prescriptionHtml);
+    document.getElementById('no-prescriptions-message').style.display = 'none';
+}
+
+function removePrescription(prescriptionId) {
+    if (confirm('Are you sure you want to remove this prescription?')) {
+        document.getElementById(`prescription-${prescriptionId}`).remove();
+        
+        const container = document.getElementById('prescriptions-container');
+        if (container.children.length === 0) {
+            document.getElementById('no-prescriptions-message').style.display = 'block';
+        }
+    }
+}
+
+function collectPrescriptions() {
+    const prescriptions = [];
+    
+    for (let i = 1; i <= prescriptionCounter; i++) {
+        const prescriptionElement = document.getElementById(`prescription-${i}`);
+        if (!prescriptionElement) continue;
+        
+        prescriptions.push({
+            roi_name: document.getElementById(`prescription_roi_${i}`).value,
+            dose_prescribed: document.getElementById(`prescription_dose_${i}`).value,
+            dose_unit: document.getElementById(`prescription_unit_${i}`).value,
+            fractions_prescribed: document.getElementById(`prescription_fractions_${i}`).value
+        });
+    }
+    
+    return prescriptions;
+}
+
+// Load existing prescriptions on page load
+window.addEventListener('DOMContentLoaded', function() {
+    if (existingPrescriptions && existingPrescriptions.length > 0) {
+        existingPrescriptions.forEach(prescriptionData => {
+            addPrescription(prescriptionData);
+        });
+    }
+});
+
+document.getElementById('templateForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const data = {
+        name: document.getElementById('name').value,
+        cancer_site: document.getElementById('cancer_site').value,
+        cancer_side: document.getElementById('cancer_side').value,
+        treatment_modality: document.getElementById('treatment_modality').value,
+        rulegroup_id: document.getElementById('rulegroup_id').value,
+        ebrt_beam_energy: document.getElementById('ebrt_beam_energy').value,
+        electron_beam_energy: document.getElementById('electron_beam_energy').value,
+        proton_beam_energy: document.getElementById('proton_beam_energy').value,
+        carbon_beam_energy: document.getElementById('carbon_beam_energy').value,
+        prescriptions: collectPrescriptions()
+    };
+    
+    try {
+        const response = await fetch('{% url "edit_prescription_template" template.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            window.location.href = '{% url "view_templates" %}';
+        } else {
+            let errorMsg = result.message;
+            if (result.errors) {
+                errorMsg += '\n\nErrors:\n';
+                for (const [field, errors] of Object.entries(result.errors)) {
+                    errorMsg += `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}\n`;
+                }
+            }
+            alert(errorMsg);
+        }
+    } catch (error) {
+        alert('Error submitting form: ' + error.message);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends "app/base.html" %}
+
+{% block title %}Create Rule Group - ICON{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ruleset-card {
+        border-left: 4px solid #0d6efd;
+        margin-bottom: 20px;
+    }
+    .rule-card {
+        border-left: 3px solid #6c757d;
+        background-color: #f8f9fa;
+    }
+    .btn-remove {
+        opacity: 0.7;
+    }
+    .btn-remove:hover {
+        opacity: 1;
+    }
+    .order-badge {
+        font-size: 1rem;
+        padding: 0.5rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="bi bi-diagram-3-fill"></i> Create New Rule Group
+            </h2>
+            <a href="{% url 'view_rulegroups' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Rule Groups
+            </a>
+        </div>
+    </div>
+</div>
+
+<form id="ruleGroupForm">
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Rule Group Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="rulegroup_name" class="form-label">Rule Group Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="rulegroup_name" name="rulegroup_name" required>
+                    <div class="form-text">Unique name for this rule group</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="rulegroup_description" class="form-label">Description</label>
+                    <textarea class="form-control" id="rulegroup_description" name="rulegroup_description" rows="3"></textarea>
+                    <div class="form-text">Optional description of this rule group</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Rulesets</h5>
+                <button type="button" class="btn btn-light btn-sm" onclick="addRuleset()">
+                    <i class="bi bi-plus-circle"></i> Add Ruleset
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="rulesets-container">
+                <!-- Rulesets will be added here dynamically -->
+            </div>
+            <div id="no-rulesets-message" class="text-center text-muted py-4">
+                <i class="bi bi-info-circle"></i> No rulesets added yet. Click "Add Ruleset" to begin.
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'view_rulegroups' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle"></i> Create Rule Group
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let rulesetCounter = 0;
+let ruleCounters = {};
+
+const parameterChoices = {{ parameter_choices|safe }};
+const operatorChoices = {{ operator_choices|safe }};
+const combinationChoices = {{ combination_choices|safe }};
+
+function addRuleset() {
+    rulesetCounter++;
+    ruleCounters[rulesetCounter] = 0;
+    
+    const rulesetHtml = `
+        <div class="card ruleset-card mb-3" id="ruleset-${rulesetCounter}">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary order-badge me-2">Ruleset #${rulesetCounter}</span>
+                        <input type="text" class="form-control form-control-sm d-inline-block" 
+                               style="width: 300px;" 
+                               placeholder="Ruleset Name" 
+                               id="ruleset_name_${rulesetCounter}" 
+                               required>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm btn-remove" onclick="removeRuleset(${rulesetCounter})">
+                        <i class="bi bi-trash"></i> Remove Ruleset
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Order</label>
+                        <input type="number" class="form-control" id="ruleset_order_${rulesetCounter}" 
+                               value="${rulesetCounter}" min="1" required>
+                    </div>
+                    <div class="col-md-10">
+                        <label class="form-label">Combination with Next Ruleset</label>
+                        <select class="form-select" id="ruleset_combination_${rulesetCounter}">
+                            <option value="">None</option>
+                            ${combinationChoices.map(choice => `<option value="${choice[0]}">${choice[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0"><i class="bi bi-list-check"></i> Rules</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRule(${rulesetCounter})">
+                        <i class="bi bi-plus"></i> Add Rule
+                    </button>
+                </div>
+                
+                <div id="rules-container-${rulesetCounter}">
+                    <!-- Rules will be added here -->
+                </div>
+                <div id="no-rules-message-${rulesetCounter}" class="text-muted small mt-2">
+                    No rules added yet. Click "Add Rule" to add rules to this ruleset.
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('rulesets-container').insertAdjacentHTML('beforeend', rulesetHtml);
+    document.getElementById('no-rulesets-message').style.display = 'none';
+}
+
+function removeRuleset(rulesetId) {
+    if (confirm('Are you sure you want to remove this ruleset and all its rules?')) {
+        document.getElementById(`ruleset-${rulesetId}`).remove();
+        delete ruleCounters[rulesetId];
+        
+        if (Object.keys(ruleCounters).length === 0) {
+            document.getElementById('no-rulesets-message').style.display = 'block';
+        }
+    }
+}
+
+function addRule(rulesetId) {
+    ruleCounters[rulesetId]++;
+    const ruleId = ruleCounters[rulesetId];
+    
+    const ruleHtml = `
+        <div class="card rule-card mb-2" id="rule-${rulesetId}-${ruleId}">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge bg-secondary">Rule #${ruleId}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove" onclick="removeRule(${rulesetId}, ${ruleId})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                
+                <div class="row g-2">
+                    <div class="col-md-2">
+                        <label class="form-label small">Order</label>
+                        <input type="number" class="form-control form-control-sm" 
+                               id="rule_order_${rulesetId}_${ruleId}" 
+                               value="${ruleId}" min="1" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Parameter</label>
+                        <select class="form-select form-select-sm" id="rule_parameter_${rulesetId}_${ruleId}" required>
+                            <option value="">Select...</option>
+                            ${parameterChoices.map(choice => `<option value="${choice[0]}">${choice[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Operator</label>
+                        <select class="form-select form-select-sm" id="rule_operator_${rulesetId}_${ruleId}" required>
+                            <option value="">Select...</option>
+                            ${operatorChoices.map(choice => `<option value="${choice[0]}">${choice[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Value</label>
+                        <input type="text" class="form-control form-control-sm" 
+                               id="rule_value_${rulesetId}_${ruleId}" 
+                               placeholder="Value" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Combination</label>
+                        <select class="form-select form-select-sm" id="rule_combination_${rulesetId}_${ruleId}">
+                            <option value="">None</option>
+                            ${combinationChoices.map(choice => `<option value="${choice[0]}">${choice[1]}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById(`rules-container-${rulesetId}`).insertAdjacentHTML('beforeend', ruleHtml);
+    document.getElementById(`no-rules-message-${rulesetId}`).style.display = 'none';
+}
+
+function removeRule(rulesetId, ruleId) {
+    document.getElementById(`rule-${rulesetId}-${ruleId}`).remove();
+    
+    const rulesContainer = document.getElementById(`rules-container-${rulesetId}`);
+    if (rulesContainer.children.length === 0) {
+        document.getElementById(`no-rules-message-${rulesetId}`).style.display = 'block';
+    }
+}
+
+function collectFormData() {
+    const data = {
+        rulegroup_name: document.getElementById('rulegroup_name').value,
+        rulegroup_description: document.getElementById('rulegroup_description').value,
+        rulesets: []
+    };
+    
+    for (const rulesetId in ruleCounters) {
+        const rulesetElement = document.getElementById(`ruleset-${rulesetId}`);
+        if (!rulesetElement) continue;
+        
+        const ruleset = {
+            ruleset_order: parseInt(document.getElementById(`ruleset_order_${rulesetId}`).value),
+            ruleset_name: document.getElementById(`ruleset_name_${rulesetId}`).value,
+            ruleset_combination: document.getElementById(`ruleset_combination_${rulesetId}`).value,
+            rules: []
+        };
+        
+        for (let ruleId = 1; ruleId <= ruleCounters[rulesetId]; ruleId++) {
+            const ruleElement = document.getElementById(`rule-${rulesetId}-${ruleId}`);
+            if (!ruleElement) continue;
+            
+            const rule = {
+                rule_order: parseInt(document.getElementById(`rule_order_${rulesetId}_${ruleId}`).value),
+                parameter_to_be_matched: document.getElementById(`rule_parameter_${rulesetId}_${ruleId}`).value,
+                matching_operator: document.getElementById(`rule_operator_${rulesetId}_${ruleId}`).value,
+                matching_value: document.getElementById(`rule_value_${rulesetId}_${ruleId}`).value,
+                rule_combination_type: document.getElementById(`rule_combination_${rulesetId}_${ruleId}`).value
+            };
+            
+            ruleset.rules.push(rule);
+        }
+        
+        data.rulesets.push(ruleset);
+    }
+    
+    return data;
+}
+
+document.getElementById('ruleGroupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (Object.keys(ruleCounters).length === 0) {
+        alert('Please add at least one ruleset before submitting.');
+        return;
+    }
+    
+    const data = collectFormData();
+    
+    try {
+        const response = await fetch('{% url "create_rulegroup" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(result.message);
+            window.location.href = '{% url "view_rulegroup_detail" 0 %}'.replace('0', result.rulegroup_id);
+        } else {
+            alert('Error: ' + result.message);
+        }
+    } catch (error) {
+        alert('Error submitting form: ' + error.message);
+    }
+});
+
+// Add one ruleset by default when page loads
+window.addEventListener('DOMContentLoaded', function() {
+    addRuleset();
+});
+</script>
+{% endblock %}

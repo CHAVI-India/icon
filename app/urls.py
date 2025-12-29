@@ -13,6 +13,10 @@ urlpatterns = [
     path('studies/', views.view_studies, name='view_studies'),
     path('studies/<int:study_id>/', views.view_study_detail, name='view_study_detail'),
     path('templates/', views.view_templates, name='view_templates'),
+    path('templates/create/', views.create_prescription_template, name='create_prescription_template'),
+    path('templates/<int:template_id>/edit/', views.edit_prescription_template, name='edit_prescription_template'),
     path('rulegroups/', views.view_rulegroups, name='view_rulegroups'),
+    path('rulegroups/create/', views.create_rulegroup, name='create_rulegroup'),
     path('rulegroups/<int:rulegroup_id>/', views.view_rulegroup_detail, name='view_rulegroup_detail'),
+    path('rulegroups/<int:rulegroup_id>/edit/', views.edit_rulegroup, name='edit_rulegroup'),
 ]

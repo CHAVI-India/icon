@@ -1,13 +1,18 @@
 {% extends "app/base.html" %}
 
-{% block title %}Prescription Templates - DICOM Processing{% endblock %}
+{% block title %}Prescription Templates - ICON{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h2>
-            <i class="bi bi-file-text"></i> Prescription Templates
-        </h2>
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="bi bi-file-text"></i> Prescription Templates
+            </h2>
+            <a href="{% url 'create_prescription_template' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Create New Template
+            </a>
+        </div>
     </div>
 </div>
 
@@ -25,6 +30,7 @@
                         <th>Beam Energy</th>
                         <th>Rule Group</th>
                         <th>Created</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,6 +71,11 @@
                             </a>
                         </td>
                         <td>{{ template.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'edit_prescription_template' template.id %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
