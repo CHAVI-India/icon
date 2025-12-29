@@ -1,0 +1,70 @@
+{% extends "app/base.html" %}
+
+{% block title %}View Patients - DICOM Processing{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-people"></i> Patients
+        </h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if patients %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Patient ID</th>
+                        <th>Patient Name</th>
+                        <th>Date of Birth</th>
+                        <th>Sex</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr>
+                        <td><code>{{ patient.unique_patient_id }}</code></td>
+                        <td>{{ patient.patient_name }}</td>
+                        <td>{{ patient.patient_dob|date:"Y-m-d"|default:"N/A" }}</td>
+                        <td>
+                            {% if patient.patient_sex == 'male' %}
+                                <span class="badge bg-primary">Male</span>
+                            {% elif patient.patient_sex == 'female' %}
+                                <span class="badge bg-danger">Female</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ patient.patient_sex|title|default:"N/A" }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ patient.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'view_patient_detail' patient.id %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people" style="font-size: 64px; color: #ccc;"></i>
+            <h5 class="mt-3 text-muted">No patients found</h5>
+            <p class="text-muted">Process DICOM files to extract patient data</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dicom_index' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

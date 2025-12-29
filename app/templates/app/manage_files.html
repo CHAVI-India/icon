@@ -1,0 +1,98 @@
+{% extends "app/base.html" %}
+
+{% block title %}Manage Files - DICOM Processing{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="bi bi-gear"></i> Manage DICOM Files
+            </h2>
+            <a href="{% url 'upload_dicom_file' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Upload New File
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if dicom_files %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>File</th>
+                        <th>Uploaded By</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in dicom_files %}
+                    <tr>
+                        <td>{{ file.id }}</td>
+                        <td>
+                            <i class="bi bi-file-earmark-zip"></i>
+                            {{ file.file.name|truncatechars:50 }}
+                        </td>
+                        <td>{{ file.uploaded_by.username }}</td>
+                        <td>
+                            {% if file.processing_status == 'pending' %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-clock-history"></i> Pending
+                                </span>
+                            {% elif file.processing_status == 'in_progress' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-gear-fill"></i> Processing
+                                </span>
+                            {% elif file.processing_status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle-fill"></i> Completed
+                                </span>
+                            {% elif file.processing_status == 'failed' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle-fill"></i> Failed
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ file.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ file.updated_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if file.processing_status == 'pending' %}
+                                <a href="{% url 'admin:process_dicom_file' file.id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-play-fill"></i> Process
+                                </a>
+                            {% endif %}
+                            <a href="/admin/app/dicomfile/{{ file.id }}/change/" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 64px; color: #ccc;"></i>
+            <h5 class="mt-3 text-muted">No DICOM files uploaded yet</h5>
+            <p class="text-muted">Upload your first DICOM ZIP file to get started</p>
+            <a href="{% url 'upload_dicom_file' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Upload DICOM File
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dicom_index' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}

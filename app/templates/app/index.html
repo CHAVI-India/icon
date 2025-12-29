@@ -192,17 +192,20 @@
                     <i class="bi bi-lightning-fill"></i> Quick Actions
                 </h5>
                 <div class="btn-group" role="group">
-                    <a href="/admin/app/dicomfile/" class="btn btn-outline-primary">
+                    <a href="{% url 'manage_files' %}" class="btn btn-outline-primary">
                         <i class="bi bi-gear"></i> Manage Files
                     </a>
-                    <a href="/admin/app/patient/" class="btn btn-outline-primary">
+                    <a href="{% url 'view_patients' %}" class="btn btn-outline-primary">
                         <i class="bi bi-people"></i> View Patients
                     </a>
-                    <a href="/admin/app/dicomstudy/" class="btn btn-outline-primary">
+                    <a href="{% url 'view_studies' %}" class="btn btn-outline-primary">
                         <i class="bi bi-folder"></i> View Studies
                     </a>
-                    <a href="/admin/app/prescriptiontemplate/" class="btn btn-outline-primary">
+                    <a href="{% url 'view_templates' %}" class="btn btn-outline-primary">
                         <i class="bi bi-file-text"></i> Templates
+                    </a>
+                    <a href="{% url 'view_rulegroups' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-diagram-3"></i> Rule Groups
                     </a>
                 </div>
             </div>

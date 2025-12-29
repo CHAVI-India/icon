@@ -1,0 +1,116 @@
+{% extends "app/base.html" %}
+
+{% block title %}{{ rulegroup.rulegroup_name }} - Rule Group Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-diagram-3"></i> {{ rulegroup.rulegroup_name }}
+        </h2>
+        {% if rulegroup.rulegroup_description %}
+        <p class="text-muted">{{ rulegroup.rulegroup_description }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Rule Group Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Name:</strong> {{ rulegroup.rulegroup_name }}</p>
+                <p><strong>Created:</strong> {{ rulegroup.created_at|date:"Y-m-d H:i:s" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Updated:</strong> {{ rulegroup.updated_at|date:"Y-m-d H:i:s" }}</p>
+                <p><strong>Number of Rulesets:</strong> {{ rulesets_with_rules|length }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if rulesets_with_rules %}
+    {% for item in rulesets_with_rules %}
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-list-check"></i> Ruleset #{{ item.ruleset.ruleset_order }}: {{ item.ruleset.ruleset_name }}
+                </h6>
+                {% if item.ruleset.ruleset_combination %}
+                <span class="badge bg-light text-dark">
+                    Combination: {{ item.ruleset.get_ruleset_combination_display|default:item.ruleset.ruleset_combination }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            {% if item.rules %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Parameter</th>
+                            <th>Operator</th>
+                            <th>Value</th>
+                            <th>Combination</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rule in item.rules %}
+                        <tr>
+                            <td>{{ rule.rule_order }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ rule.get_parameter_to_be_matched_display|default:rule.parameter_to_be_matched }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ rule.get_matching_operator_display|default:rule.matching_operator }}
+                                </span>
+                            </td>
+                            <td><code>{{ rule.matching_value }}</code></td>
+                            <td>
+                                {% if rule.rule_combination_type %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ rule.get_rule_combination_type_display|default:rule.rule_combination_type }}
+                                </span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No rules defined for this ruleset.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-list-check" style="font-size: 64px; color: #ccc;"></i>
+        <h5 class="mt-3 text-muted">No rulesets found</h5>
+        <p class="text-muted">Add rulesets to this rule group in the admin panel</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{% url 'view_rulegroups' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Rule Groups
+    </a>
+    <a href="{% url 'dicom_index' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-house"></i> Dashboard
+    </a>
+</div>
+{% endblock %}

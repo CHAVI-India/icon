@@ -93,7 +93,7 @@
                 </div>
                 
                 <div class="text-center mt-4">
-                    <a href="/admin/app/dicomfile/" class="btn btn-primary">
+                    <a href="{% url 'dicom_index' %}" class="btn btn-primary">
                         <i class="bi bi-arrow-left"></i> Back to DICOM Files
                     </a>
                 </div>
@@ -105,7 +105,7 @@
 
 {% block extra_js %}
 <script>
-    const taskIds = {{ task_ids|safe }};
+    const taskIds = {{ task_ids_json|safe }};
     const updateInterval = 1000; // Update every 1 second
     const taskStates = {};
     
@@ -118,8 +118,13 @@
     });
     
     function updateTaskProgress(taskId) {
-        fetch(`/dicom/api/task-status/${taskId}/`)
-            .then(response => response.json())
+        fetch(`/api/task-status/${taskId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 const progressBar = document.getElementById(`progress-${taskId}`);
                 const statusBadge = document.getElementById(`status-${taskId}`);
@@ -189,6 +194,10 @@
             })
             .catch(error => {
                 console.error('Error fetching task status:', error);
+                const description = document.getElementById(`description-${taskId}`);
+                if (description) {
+                    description.textContent = `Error: ${error.message}`;
+                }
             });
     }
     

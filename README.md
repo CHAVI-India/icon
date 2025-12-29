@@ -28,3 +28,8 @@ The following are the parameters which related to spatial orientation and volume
 3. Volmetric overlap with the organs at risk for the target(s).  
 4. Surface contact of the target(s) with the organs at risk. This surface contact can be measured in terms of the surface area of the target that is in contact with the organs at risk. Additional measures which may be of importance will include the angle of contact in the axial plane and the angle of contact in the sagittal plane. The angles of contact can vary at each of the slices in the axial plane as well as for the reconstructed 3D volume in the sagittal plane. Hence we will need a dimensionality reduction technique to get the angles of contact at each plane into a manageable number of parameters.  We will also need to evaluate methods available in hyperbolic geometry as well as topological sciences for classifying this. The contact plane curvature analysis may be an option also. gaussian and mean curvature analysis may be an option also. Integration of the gaussian curvature ? shape operator. Curvature analysis can be conducted using vtkcurvatures package.
 5. Note that there is a special case for SIB target volumes which are often completely encased within a lower dose target volume. In this case, the surface contact is measured as the surface area of the lower dose target volume that is in contact with the SIB target volume.  
+
+# Additional notes for docker container
+
+We will need the following packages in the linux container
+- libmagic1 (for python-magic library)

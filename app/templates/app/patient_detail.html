@@ -1,0 +1,152 @@
+{% extends "app/base.html" %}
+
+{% block title %}{{ patient.patient_name }} - Patient Details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>
+            <i class="bi bi-person-fill"></i> {{ patient.patient_name }}
+        </h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Patient Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Patient ID:</strong> <code>{{ patient.unique_patient_id }}</code></p>
+                <p><strong>Name:</strong> {{ patient.patient_name }}</p>
+                <p><strong>Date of Birth:</strong> {{ patient.patient_dob|date:"Y-m-d"|default:"N/A" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Sex:</strong> 
+                    {% if patient.patient_sex == 'male' %}
+                        <span class="badge bg-primary">Male</span>
+                    {% elif patient.patient_sex == 'female' %}
+                        <span class="badge bg-danger">Female</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ patient.patient_sex|title|default:"N/A" }}</span>
+                    {% endif %}
+                </p>
+                <p><strong>Total Studies:</strong> {{ total_studies }}</p>
+                <p><strong>Created:</strong> {{ patient.created_at|date:"Y-m-d H:i:s" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if studies_with_details %}
+    <h4 class="mb-3"><i class="bi bi-folder"></i> Studies ({{ total_studies }})</h4>
+    
+    {% for study_data in studies_with_details %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-folder-fill"></i> Study: {{ study_data.study.study_description|default:"Unnamed Study" }}
+                </h6>
+                <div>
+                    <span class="badge bg-light text-dark me-2">{{ study_data.series_count }} Series</span>
+                    <span class="badge bg-light text-dark">{{ study_data.total_instances }} Instances</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Study UID:</strong> <code>{{ study_data.study.study_instance_uid|truncatechars:50 }}</code></p>
+                    <p class="mb-1"><strong>Study Date:</strong> {{ study_data.study.study_date|date:"Y-m-d"|default:"N/A" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-1"><strong>Description:</strong> {{ study_data.study.study_description|default:"N/A" }}</p>
+                    <p class="mb-1"><strong>Created:</strong> {{ study_data.study.created_at|date:"Y-m-d H:i" }}</p>
+                </div>
+            </div>
+            
+            {% if study_data.series_list %}
+            <h6 class="mt-3 mb-2"><i class="bi bi-collection"></i> Series ({{ study_data.series_count }})</h6>
+            
+            {% for series_data in study_data.series_list %}
+            <div class="card mb-2">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>{{ series_data.series.series_description|default:"Unnamed Series" }}</strong>
+                        <span class="badge bg-secondary">{{ series_data.instance_count }} Instances</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1 small"><strong>Series UID:</strong> <code>{{ series_data.series.series_instance_uid|truncatechars:40 }}</code></p>
+                            <p class="mb-1 small"><strong>Frame of Reference UID:</strong> <code>{{ series_data.series.frame_of_reference_uid|truncatechars:40|default:"N/A" }}</code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1 small"><strong>Series Date:</strong> {{ series_data.series.series_date|date:"Y-m-d"|default:"N/A" }}</p>
+                            <p class="mb-1 small"><strong>Created:</strong> {{ series_data.series.created_at|date:"Y-m-d H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if series_data.instances %}
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#instances-{{ series_data.series.id }}" aria-expanded="false">
+                            <i class="bi bi-eye"></i> View Instances ({{ series_data.instance_count }})
+                        </button>
+                        
+                        <div class="collapse mt-2" id="instances-{{ series_data.series.id }}">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>SOP Instance UID</th>
+                                            <th>Modality</th>
+                                            <th>Pixel Spacing</th>
+                                            <th>Created</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for instance in series_data.instances %}
+                                        <tr>
+                                            <td><code>{{ instance.sop_instance_uid|truncatechars:40 }}</code></td>
+                                            <td><span class="badge bg-info">{{ instance.modality|default:"N/A" }}</span></td>
+                                            <td>{{ instance.pixel_spacing|default:"N/A" }}</td>
+                                            <td>{{ instance.created_at|date:"Y-m-d H:i" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-muted">No series found for this study.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-folder" style="font-size: 64px; color: #ccc;"></i>
+        <h5 class="mt-3 text-muted">No studies found</h5>
+        <p class="text-muted">This patient has no associated DICOM studies</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="mt-3">
+    <a href="{% url 'view_patients' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Patients
+    </a>
+    <a href="{% url 'dicom_index' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-house"></i> Dashboard
+    </a>
+</div>
+{% endblock %}
