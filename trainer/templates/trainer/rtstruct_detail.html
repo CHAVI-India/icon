@@ -1,0 +1,116 @@
+{% extends "app/base.html" %}
+{% load static %}
+
+{% block title %}RT Structure Set Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:upload_training_data' %}">Training Data</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:training_data_list' %}">Archives</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:archive_detail' rtstruct.referenced_series_instance_uid.training_data_set_archive.id %}">Archive</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:image_series_detail' rtstruct.referenced_series_instance_uid.id %}">Image Series</a></li>
+                    <li class="breadcrumb-item active">RT Structure Set</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4><i class="bi bi-diagram-3-fill"></i> RT Structure Set Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Structure Set Details</h5>
+                            <p><strong>Structure Set UID:</strong><br><small class="text-muted">{{ rtstruct.structureset_dicom_series_uid }}</small></p>
+                            <p><strong>File Path:</strong><br><small>{{ rtstruct.structureset_path }}</small></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Referenced Image Series</h5>
+                            <p><strong>Patient ID:</strong> {{ rtstruct.referenced_series_instance_uid.patient_id }}</p>
+                            <p><strong>Series Description:</strong> {{ rtstruct.referenced_series_instance_uid.series_description|default:"N/A" }}</p>
+                            <p><strong>Modality:</strong> <span class="badge bg-info">{{ rtstruct.referenced_series_instance_uid.image_type|upper }}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-bullseye"></i> Regions of Interest (ROIs) - {{ rois.count }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if rois %}
+                    <div class="row">
+                        {% for roi in rois %}
+                        <div class="col-md-3 mb-2">
+                            <div class="alert alert-primary mb-0">
+                                <i class="bi bi-circle-fill"></i> {{ roi.roi_name }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No ROIs found in this structure set.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-lightning-fill"></i> RT Plans and Doses - {{ plans_doses.count }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if plans_doses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>RT Plan UID</th>
+                                    <th>RT Dose UID</th>
+                                    <th>Plan Path</th>
+                                    <th>Dose Path</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan_dose in plans_doses %}
+                                <tr>
+                                    <td><small class="text-muted">{{ plan_dose.rtplan_series_instance_uid|truncatechars:30 }}</small></td>
+                                    <td><small class="text-muted">{{ plan_dose.rtdose_series_instance_uid|truncatechars:30 }}</small></td>
+                                    <td><small>{{ plan_dose.rtplan_path|truncatechars:40 }}</small></td>
+                                    <td><small>{{ plan_dose.rtdose_path|truncatechars:40 }}</small></td>
+                                    <td>{{ plan_dose.created_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No RT Plans and Doses found for this structure set.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

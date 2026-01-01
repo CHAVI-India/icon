@@ -434,7 +434,7 @@ def save_processed_dicom_file(dataset, original_file_path, sop_instance_uid):
     
     # Save the DICOM file
     try:
-        dataset.save_as(output_path, write_like_original=False)
+        dataset.save_as(output_path, enforce_file_format=True)
         logger.info(f"Saved processed DICOM file: {output_path}")
         return output_path
     except Exception as e:

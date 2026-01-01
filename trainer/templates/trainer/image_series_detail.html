@@ -1,0 +1,106 @@
+{% extends "app/base.html" %}
+{% load static %}
+
+{% block title %}Image Series Detail - {{ image_series.patient_id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:upload_training_data' %}">Training Data</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:training_data_list' %}">Archives</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:archive_detail' image_series.training_data_set_archive.id %}">{{ image_series.training_data_set_archive.file.name }}</a></li>
+                    <li class="breadcrumb-item active">{{ image_series.patient_id }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4><i class="bi bi-file-medical"></i> Image Series Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Patient Information</h5>
+                            <p><strong>Patient ID:</strong> {{ image_series.patient_id|default:"N/A" }}</p>
+                            <p><strong>Series Description:</strong> {{ image_series.series_description|default:"N/A" }}</p>
+                            <p><strong>Acquisition Date:</strong> {{ image_series.series_acquisition_date|date:"Y-m-d"|default:"N/A" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Series Details</h5>
+                            <p><strong>Modality:</strong> <span class="badge bg-info">{{ image_series.image_type|upper }}</span></p>
+                            <p><strong>Number of Images:</strong> {{ image_series.number_of_images }}</p>
+                            <p><strong>Series Instance UID:</strong><br><small class="text-muted">{{ image_series.dicom_series_uid }}</small></p>
+                        </div>
+                    </div>
+                    
+                    {% if image_series.image_paths %}
+                    <hr>
+                    <h5>Image Files ({{ image_series.image_paths|length }})</h5>
+                    <div class="alert alert-secondary">
+                        <small>
+                            {% for path in image_series.image_paths|slice:":5" %}
+                            <div><i class="bi bi-file-earmark"></i> {{ path }}</div>
+                            {% endfor %}
+                            {% if image_series.image_paths|length > 5 %}
+                            <div class="mt-2"><em>... and {{ image_series.image_paths|length|add:"-5" }} more files</em></div>
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-diagram-3"></i> RT Structure Sets ({{ rtstructs.count }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if rtstructs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Structure Set UID</th>
+                                    <th>File Path</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rtstruct in rtstructs %}
+                                <tr>
+                                    <td><small class="text-muted">{{ rtstruct.structureset_dicom_series_uid|truncatechars:40 }}</small></td>
+                                    <td><small>{{ rtstruct.structureset_path|truncatechars:50 }}</small></td>
+                                    <td>{{ rtstruct.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'trainer:rtstruct_detail' rtstruct.id %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No RT Structure Sets found for this image series.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

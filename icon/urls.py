@@ -21,4 +21,6 @@ urlpatterns = [
     path('', include('app.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
+    path('trainer/', include('trainer.urls')),
+    path('celery-progress/', include('celery_progress.urls')),
 ]

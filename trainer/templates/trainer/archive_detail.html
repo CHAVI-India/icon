@@ -1,0 +1,108 @@
+{% extends "app/base.html" %}
+{% load static %}
+
+{% block title %}Archive Detail - {{ archive.file.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:upload_training_data' %}">Training Data</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'trainer:training_data_list' %}">Archives</a></li>
+                    <li class="breadcrumb-item active">{{ archive.file.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4><i class="bi bi-archive-fill"></i> Archive Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>File Name:</strong> {{ archive.file.name }}</p>
+                            <p><strong>Uploaded By:</strong> {{ archive.uploaded_by.username }}</p>
+                            <p><strong>Upload Date:</strong> {{ archive.created_at|date:"Y-m-d H:i:s" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Status:</strong> 
+                                {% if archive.archive_extracted %}
+                                <span class="badge bg-success">Extracted</span>
+                                {% else %}
+                                <span class="badge bg-warning">Not Extracted</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Extraction Date:</strong> 
+                                {% if archive.date_archive_extracted %}
+                                {{ archive.date_archive_extracted|date:"Y-m-d H:i:s" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                            <p><strong>Total Image Series:</strong> {{ total_images }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="bi bi-images"></i> Image Series ({{ total_images }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if images %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Series Description</th>
+                                    <th>Modality</th>
+                                    <th>Number of Images</th>
+                                    <th>Acquisition Date</th>
+                                    <th>Series UID</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for image in images %}
+                                <tr>
+                                    <td><strong>{{ image.patient_id|default:"N/A" }}</strong></td>
+                                    <td>{{ image.series_description|default:"N/A" }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ image.image_type|upper }}</span>
+                                    </td>
+                                    <td>{{ image.number_of_images }}</td>
+                                    <td>{{ image.series_acquisition_date|date:"Y-m-d"|default:"N/A" }}</td>
+                                    <td><small class="text-muted">{{ image.dicom_series_uid|truncatechars:30 }}</small></td>
+                                    <td>
+                                        <a href="{% url 'trainer:image_series_detail' image.id %}" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No image series found. The archive may not have been processed yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
