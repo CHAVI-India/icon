@@ -9,3 +9,6 @@ DJANGO_DB_USER=postgres
 DJANGO_DB_PASSWORD=postgres
 DJANGO_DB_HOST=localhost
 DJANGO_DB_PORT=5432
+
+# Celery Settings
+DJANGO_CELERY_BROKER_URL=amqp://guest:guest@localhost:5672//

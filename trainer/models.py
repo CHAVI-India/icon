@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from app.models import validate_zip_file
+from app.models import validate_zip_file, PrescriptionTemplate
 
 # Create your models here.
 
@@ -108,3 +108,48 @@ class TrainingRTPlanAndDoseFile(models.Model):
     
     def __str__(self):
         return f"{self.rtdose_series_instance_uid} - {self.rtplan_series_instance_uid}"
+
+
+class ModelTypeChoices(models.TextChoices):
+    SVMR = 'svmr', 'Support Vector Machine Regression'
+    XGB = 'xgbr', 'XGBoost'
+    ANN = 'ann', 'Artificial Neural Networks'
+    
+
+class PredictionModel(models.Model):
+    '''
+    This model will store information about the prediction model to be trained. It will also store information about the actual files to be used for model training.
+    '''
+
+    name_of_model = models.CharField(max_length=255, help_text="Name of the model.")
+    prescription_template = models.ForeignKey(PrescriptionTemplate, on_delete=models.CASCADE,help_text="Prescription template to be used for training.")
+    type_of_model = models.CharField(max_length=255, help_text="Type of model to be used for training.",choices=ModelTypeChoices.choices)
+    rt_plan_dose_file = models.ManyToManyField(TrainingRTPlanAndDoseFile, help_text="RTPlan and RTDose file to be used for training.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Prediction Model'
+        verbose_name_plural = 'Prediction Models'
+    
+    def __str__(self):
+        return self.name_of_model
+
+
+class PredictionModelFile(models.Model):
+    '''
+    This model will store information about the prediction model file from a prediction model. The model file will be stored as a serialized file in a format like pickle or onnx or gguf.
+    This will have a one to one relationship with the PredictionModel model.
+    '''
+    prediction_model = models.OneToOneField(PredictionModel, on_delete=models.CASCADE,help_text="Prediction model to which the model file belongs to.")
+    model_file = models.FileField(upload_to='model_files/', help_text="Model file in a serialized format like pickle or onnx or gguf format.") 
+    model_version=models.DecimalField(max_digits=5, decimal_places=2, help_text="Version of the model file.")   
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)   
+
+    class Meta:
+        verbose_name = 'Prediction Model File'
+        verbose_name_plural = 'Prediction Model Files'
+    
+    def __str__(self):
+        return self.model_file
